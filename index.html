@@ -325,84 +325,98 @@
                         </main>
 
                         <footer className="mt-10 px-5 relative z-10">
-    <div className="flex flex-col gap-5 mb-10">
-        
-        {/* 1. 奉獻帳戶資訊卡片 */}
-        <div className={`${cardStyle} p-7 text-left border-gray-200/40`}>
-            <div className="flex items-center gap-3 mb-5 text-[#8E8E93]">
-                <Icon name="card" size={22} />
-                <h4 className="text-xs font-black uppercase tracking-[0.2em]">奉獻帳戶資訊</h4>
-            </div>
+            <div className="flex flex-col gap-5 mb-10">
+                
+                {/* 1. 奉獻帳戶資訊卡片 */}
+                <div className={`${cardStyle} p-7 text-left border-gray-200/40`}>
+                    <div className="flex items-center gap-3 mb-5 text-[#8E8E93]">
+                        {/* 已經移除標題旁的 card icon */}
+                        <h4 className="text-xs font-black uppercase tracking-[0.2em]">奉獻帳戶資訊</h4>
+                    </div>
 
-            <div className="space-y-4">
-                {/* 銀行帳號區塊 - 淺灰底色 */}
-                <div className="flex items-start gap-3 p-4 bg-[#F2F2F7] rounded-2xl border border-gray-200/50 shadow-sm">
-                    <Icon name="bank" size={18} className="mt-1 text-[#007AFF] shrink-0" />
-                    <div className="space-y-1">
-                        <p className="text-[11px] font-bold text-[#8E8E93] uppercase tracking-widest">{data.offering.bank}</p>
-                        <p className="text-[24px] font-black text-[#1C1C1E] tracking-tighter leading-none">{data.offering.account}</p>
+                    <div className="space-y-4">
+                        {/* 銀行帳號區塊 */}
+                        <div className="flex items-start gap-3 p-4 bg-[#F2F2F7] rounded-2xl border border-gray-200/50 shadow-sm">
+                            {/* 加入 card icon 並設定隨頁籤變換顏色 */}
+                            <Icon name="card" size={18} className={`mt-1 shrink-0 transition-colors duration-500 ${
+                                activeMainTab === 'worship' ? 'text-[#007AFF]' : activeMainTab === 'news' ? 'text-[#FF9500]' : 'text-[#34C759]'
+                            }`} />
+                            <div className="space-y-1">
+                                <p className="text-[11px] font-bold text-[#8E8E93] uppercase tracking-widest">{data.offering.bank}</p>
+                                <p className="text-[24px] font-black text-[#1C1C1E] tracking-tighter leading-none">{data.offering.account}</p>
+                            </div>
+                        </div>
+
+                        {/* 戶名區塊 */}
+                        <div className="flex items-start gap-3 p-4 bg-[#F2F2F7] rounded-2xl border border-gray-200/50 shadow-sm">
+                            {/* 戶名的 users icon 顏色同步改為動態切換，保持整體視覺一致 */}
+                            <Icon name="users" size={18} className={`mt-0.5 shrink-0 transition-colors duration-500 ${
+                                activeMainTab === 'worship' ? 'text-[#007AFF]' : activeMainTab === 'news' ? 'text-[#FF9500]' : 'text-[#34C759]'
+                            }`} />
+                            <div className="space-y-1">
+                                <p className="text-[11px] font-bold text-[#8E8E93] uppercase tracking-widest">戶名 ACCOUNT NAME</p>
+                                <p className="text-[15px] font-bold text-[#1C1C1E] leading-snug">{data.offering.name}</p>
+                            </div>
+                        </div>
+
+                        <p className="text-xs text-[#8E8E93] italic text-center leading-relaxed mt-2">＊透過銀行轉帳奉獻後，請通知辦公室同工＊</p>
                     </div>
                 </div>
 
-                {/* 戶名區塊 - 淺灰底色 */}
-                <div className="flex items-start gap-3 p-4 bg-[#F2F2F7] rounded-2xl border border-gray-200/50 shadow-sm">
-                    <Icon name="users" size={18} className="mt-0.5 text-[#007AFF] shrink-0" />
-                    <div className="space-y-1">
-                        <p className="text-[11px] font-bold text-[#8E8E93] uppercase tracking-widest">戶名 ACCOUNT NAME</p>
-                        <p className="text-[15px] font-bold text-[#1C1C1E] leading-snug">{data.offering.name}</p>
+                {/* 2. 聯絡我們卡片 */}
+                <div className={`${cardStyle} p-7 text-left border-gray-200/40`}>
+                    <div className="flex items-center gap-3 mb-5 text-[#8E8E93]">
+                        {/* 已經移除標題旁的 phone icon */}
+                        <h4 className="text-xs font-black uppercase tracking-[0.2em]">聯絡我們 CONTACT</h4>
+                    </div>
+
+                    <div className="space-y-4">
+                        {/* 電話區塊 */}
+                        <a href={`tel:${data.office.phone}`} 
+                           className="flex items-start gap-3 p-4 bg-[#F2F2F7] rounded-2xl border border-gray-200/50 shadow-sm active:bg-gray-200 transition-colors block">
+                            {/* 加入 phone icon 並設定隨頁籤變換顏色 */}
+                            <Icon name="phone" size={18} className={`mt-1 shrink-0 transition-colors duration-500 ${
+                                activeMainTab === 'worship' ? 'text-[#007AFF]' : activeMainTab === 'news' ? 'text-[#FF9500]' : 'text-[#34C759]'
+                            }`} />
+                            <div className="space-y-1">
+                                <p className="text-[11px] font-bold text-[#8E8E93] uppercase tracking-widest">馬可樓辦公室電話 PHONE</p>
+                                <p className="text-[24px] font-black text-[#1C1C1E] tracking-tighter leading-none">{data.office.phone}</p>
+                            </div>
+                        </a>
+
+                        {/* 地址區塊 */}
+                        <div className="flex items-start gap-3 p-4 bg-[#F2F2F7] rounded-2xl border border-gray-200/50 shadow-sm">
+                            {/* 地址的 pin icon 顏色同步改為動態切換 */}
+                            <Icon name="pin" size={18} className={`mt-0.5 shrink-0 transition-colors duration-500 ${
+                                activeMainTab === 'worship' ? 'text-[#007AFF]' : activeMainTab === 'news' ? 'text-[#FF9500]' : 'text-[#34C759]'
+                            }`} />
+                            <div className="space-y-1">
+                                <p className="text-[11px] font-bold text-[#8E8E93] uppercase tracking-widest">馬可樓辦公室地址 ADDRESS</p>
+                                <p className="text-[15px] font-bold text-[#1C1C1E] leading-snug">{data.office.address}</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <p className="text-xs text-[#8E8E93] italic text-center leading-relaxed mt-2">＊透過銀行轉帳奉獻後，請通知辦公室同工＊</p>
             </div>
-        </div>
-
-        {/* 2. 聯絡我們卡片 */}
-        <div className={`${cardStyle} p-7 text-left border-gray-200/40`}>
-            <div className="flex items-center gap-3 mb-5 text-[#8E8E93]">
-                <Icon name="phone" size={22} />
-                <h4 className="text-xs font-black uppercase tracking-[0.2em]">聯絡我們 CONTACT</h4>
-            </div>
-
-            <div className="space-y-4">
-                {/* 電話區塊 - 淺灰底色 & 點擊撥號效果 */}
-                <a href={`tel:${data.office.phone}`} 
-                   className="flex items-start gap-3 p-4 bg-[#F2F2F7] rounded-2xl border border-gray-200/50 shadow-sm active:bg-gray-200 transition-colors block">
-                    <Icon name="phone-fill" size={18} className="mt-1 text-[#007AFF] shrink-0" />
-                    <div className="space-y-1">
-                        <p className="text-[11px] font-bold text-[#8E8E93] uppercase tracking-widest">馬可樓辦公室電話 PHONE</p>
-                        <p className="text-[24px] font-black text-[#1C1C1E] tracking-tighter leading-none">{data.office.phone}</p>
-                    </div>
+            
+            {/* 這裡保留您原本下方的 官方網站、新人名單 等 Footer 連結 */}
+            <div className="relative z-20 flex flex-wrap justify-center items-center gap-x-6 gap-y-4 mb-10">
+                <a href="https://royal-chosen-race.com/" target="_blank" rel="noopener noreferrer" onClick={(e) => handleExternalLink(e, 'https://royal-chosen-race.com/')} className="flex items-center gap-1.5 text-[14px] font-bold text-[#007AFF] hover:opacity-70 active:opacity-50 transition-opacity cursor-pointer px-2 py-1">
+                    <Icon name="globe" size={16} /> 官方網站
                 </a>
-
-                {/* 地址區塊 - 淺灰底色 */}
-                <div className="flex items-start gap-3 p-4 bg-[#F2F2F7] rounded-2xl border border-gray-200/50 shadow-sm">
-                    <Icon name="pin" size={18} className="mt-0.5 text-[#007AFF] shrink-0" />
-                    <div className="space-y-1">
-                        <p className="text-[11px] font-bold text-[#8E8E93] uppercase tracking-widest">馬可樓辦公室地址 ADDRESS</p>
-                        <p className="text-[15px] font-bold text-[#1C1C1E] leading-snug">{data.office.address}</p>
-                    </div>
-                </div>
+                <a href="https://reurl.cc/epkgeW" target="_blank" rel="noopener noreferrer" onClick={(e) => handleExternalLink(e, 'https://reurl.cc/epkgeW')} className="flex items-center gap-1.5 text-[14px] font-bold text-[#AF52DE] hover:opacity-70 active:opacity-50 transition-opacity cursor-pointer px-2 py-1">
+                    <Icon name="plus" size={16} /> 新人名單
+                </a>
+                <a href="https://reurl.cc/0mWG5A" target="_blank" rel="noopener noreferrer" onClick={(e) => handleExternalLink(e, 'https://reurl.cc/0mWG5A')} className="flex items-center gap-1.5 text-[14px] font-bold text-[#FF2D55] hover:opacity-70 active:opacity-50 transition-opacity cursor-pointer px-2 py-1">
+                    <Icon name="message" size={16} /> 聚會回饋
+                </a>
             </div>
-        </div>
-
-    </div>
-                            <div className="relative z-20 flex flex-wrap justify-center items-center gap-x-6 gap-y-4 mb-10">
-                                <a href="https://royal-chosen-race.com/" target="_blank" rel="noopener noreferrer" onClick={(e) => handleExternalLink(e, 'https://royal-chosen-race.com/')} className="flex items-center gap-1.5 text-[14px] font-bold text-[#007AFF] hover:opacity-70 active:opacity-50 transition-opacity cursor-pointer px-2 py-1">
-                                    <Icon name="globe" size={16} /> 官方網站
-                                </a>
-                                <a href="https://reurl.cc/epkgeW" target="_blank" rel="noopener noreferrer" onClick={(e) => handleExternalLink(e, 'https://reurl.cc/epkgeW')} className="flex items-center gap-1.5 text-[14px] font-bold text-[#AF52DE] hover:opacity-70 active:opacity-50 transition-opacity cursor-pointer px-2 py-1">
-                                    <Icon name="plus" size={16} /> 新人名單
-                                </a>
-                                <a href="https://reurl.cc/0mWG5A" target="_blank" rel="noopener noreferrer" onClick={(e) => handleExternalLink(e, 'https://reurl.cc/0mWG5A')} className="flex items-center gap-1.5 text-[14px] font-bold text-[#FF2D55] hover:opacity-70 active:opacity-50 transition-opacity cursor-pointer px-2 py-1">
-                                    <Icon name="message" size={16} /> 聚會回饋
-                                </a>
-                            </div>
-                            <div className="space-y-4 opacity-40 text-center">
-                                <p className="text-[11px] font-bold text-[#1C1C1E] tracking-[0.3em] uppercase px-4 leading-relaxed">彼此相愛 · 成全聖徒 · 各盡其職 · 完成使命</p>
-                                <p className="text-xs text-[#1C1C1E] font-bold tracking-widest">© 2026 中華基督教風一族職場教會</p>
-                            </div>
-                        </footer>
+            <div className="space-y-4 opacity-40 text-center">
+                <p className="text-[11px] font-bold text-[#1C1C1E] tracking-[0.3em] uppercase px-4 leading-relaxed">彼此相愛 · 成全聖徒 · 各盡其職 · 完成使命</p>
+                <p className="text-xs text-[#1C1C1E] font-bold tracking-widest">© 2026 中華基督教風一族職場教會</p>
+            </div>
+        </footer>
 
                         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-[448px] px-5 z-50">
                             <div className="bg-white/85 backdrop-blur-xl border border-gray-200/60 rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.1)] p-2 flex gap-1 justify-center">
