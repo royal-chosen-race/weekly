@@ -177,7 +177,7 @@
                                         <Icon name="book" size={22} />
                                         <span className="text-xs font-black tracking-widest uppercase">信息主題</span>
                                     </div>
-                                    <h2 className="text-2xl sm:text-3xl font-black text-[#1C1C1E] mb-6 tracking-normal leading-normal">  {data.theme.title}</h2>
+                                    <h2 className="text-2xl sm:text-3xl font-black text-[#1C1C1E] mb-6 tracking-normal leading-relaxed">  {data.theme.title}</h2>
                                     <div className="flex gap-6 mb-6">
                                         <div className="space-y-1"><p className="text-xs text-[#8E8E93] font-bold uppercase tracking-wider">講員</p><p className="text-[17px] font-bold text-[#1C1C1E]">{data.theme.speaker}</p></div>
                                         <div className="w-[1px] h-10 bg-gray-200"></div>
@@ -328,75 +328,69 @@
             <div className="flex flex-col gap-5 mb-10">
                 
                 {/* 1. 奉獻帳戶資訊卡片 */}
-                <div className={`${cardStyle} p-7 text-left border-gray-200/40`}>
-                    <div className="flex items-center gap-3 mb-5 text-[#8E8E93]">
-                        {/* 已經移除標題旁的 card icon */}
-                        <h4 className="text-xs font-black uppercase tracking-[0.2em]">奉獻帳戶資訊</h4>
-                    </div>
+<div className={`${cardStyle} p-7 text-left border-gray-200/40`}>
+    <div className="flex items-center gap-3 mb-5 text-[#8E8E93]">
+        <h4 className="text-xs font-black uppercase tracking-[0.2em]">奉獻帳戶資訊</h4>
+    </div>
 
-                    <div className="space-y-4">
-                        {/* 銀行帳號區塊 */}
-                        <div className="flex items-start gap-3 p-4 bg-[#F2F2F7] rounded-2xl border border-gray-200/50 shadow-sm">
-                            {/* 加入 card icon 並設定隨頁籤變換顏色 */}
-                            <Icon name="card" size={18} className={`mt-1 shrink-0 transition-colors duration-500 ${
-                                activeMainTab === 'worship' ? 'text-[#007AFF]' : activeMainTab === 'news' ? 'text-[#FF9500]' : 'text-[#34C759]'
-                            }`} />
-                            <div className="space-y-1">
-                                <p className="text-[11px] font-bold text-[#8E8E93] uppercase tracking-widest">{data.offering.bank}</p>
-                                <p className="text-[24px] font-black text-[#1C1C1E] tracking-tighter leading-none">{data.offering.account}</p>
-                            </div>
-                        </div>
+    <div className="space-y-4">
+        {/* 銀行帳號區塊：改為透明底色、單純邊框 */}
+        <div className="flex items-start gap-3 p-4 bg-transparent rounded-2xl border border-gray-200/70">
+            <Icon name="card" size={18} className={`mt-1 shrink-0 transition-colors duration-500 ${
+                activeMainTab === 'worship' ? 'text-[#007AFF]' : activeMainTab === 'news' ? 'text-[#FF9500]' : 'text-[#34C759]'
+            }`} />
+            <div className="space-y-1">
+                <p className="text-[11px] font-bold text-[#8E8E93] uppercase tracking-widest">{data.offering.bank}</p>
+                <p className="text-[24px] font-black text-[#1C1C1E] tracking-tighter leading-none">{data.offering.account}</p>
+            </div>
+        </div>
 
-                        {/* 戶名區塊 */}
-                        <div className="flex items-start gap-3 p-4 bg-[#F2F2F7] rounded-2xl border border-gray-200/50 shadow-sm">
-                            {/* 戶名的 users icon 顏色同步改為動態切換，保持整體視覺一致 */}
-                            <Icon name="users" size={18} className={`mt-0.5 shrink-0 transition-colors duration-500 ${
-                                activeMainTab === 'worship' ? 'text-[#007AFF]' : activeMainTab === 'news' ? 'text-[#FF9500]' : 'text-[#34C759]'
-                            }`} />
-                            <div className="space-y-1">
-                                <p className="text-[11px] font-bold text-[#8E8E93] uppercase tracking-widest">戶名 ACCOUNT NAME</p>
-                                <p className="text-[15px] font-bold text-[#1C1C1E] leading-snug">{data.offering.name}</p>
-                            </div>
-                        </div>
+        {/* 戶名區塊：改為透明底色、單純邊框 */}
+        <div className="flex items-start gap-3 p-4 bg-transparent rounded-2xl border border-gray-200/70">
+            <Icon name="users" size={18} className={`mt-0.5 shrink-0 transition-colors duration-500 ${
+                activeMainTab === 'worship' ? 'text-[#007AFF]' : activeMainTab === 'news' ? 'text-[#FF9500]' : 'text-[#34C759]'
+            }`} />
+            <div className="space-y-1">
+                <p className="text-[11px] font-bold text-[#8E8E93] uppercase tracking-widest">戶名 ACCOUNT NAME</p>
+                <p className="text-[15px] font-bold text-[#1C1C1E] leading-snug">{data.offering.name}</p>
+            </div>
+        </div>
 
-                        <p className="text-xs text-[#8E8E93] italic text-center leading-relaxed mt-2">＊透過銀行轉帳奉獻後，請通知辦公室同工＊</p>
-                    </div>
-                </div>
+        <p className="text-xs text-[#8E8E93] italic text-center leading-relaxed mt-2">＊透過銀行轉帳奉獻後，請通知辦公室同工＊</p>
+    </div>
+</div>
 
-                {/* 2. 聯絡我們卡片 */}
-                <div className={`${cardStyle} p-7 text-left border-gray-200/40`}>
-                    <div className="flex items-center gap-3 mb-5 text-[#8E8E93]">
-                        {/* 已經移除標題旁的 phone icon */}
-                        <h4 className="text-xs font-black uppercase tracking-[0.2em]">聯絡我們 CONTACT</h4>
-                    </div>
+{/* 2. 聯絡我們卡片 */}
+<div className={`${cardStyle} p-7 text-left border-gray-200/40`}>
+    <div className="flex items-center gap-3 mb-5 text-[#8E8E93]">
+        <h4 className="text-xs font-black uppercase tracking-[0.2em]">聯絡我們 CONTACT</h4>
+    </div>
 
-                    <div className="space-y-4">
-                        {/* 電話區塊 */}
-                        <a href={`tel:${data.office.phone}`} 
-                           className="flex items-start gap-3 p-4 bg-[#F2F2F7] rounded-2xl border border-gray-200/50 shadow-sm active:bg-gray-200 transition-colors block">
-                            {/* 加入 phone icon 並設定隨頁籤變換顏色 */}
-                            <Icon name="phone" size={18} className={`mt-1 shrink-0 transition-colors duration-500 ${
-                                activeMainTab === 'worship' ? 'text-[#007AFF]' : activeMainTab === 'news' ? 'text-[#FF9500]' : 'text-[#34C759]'
-                            }`} />
-                            <div className="space-y-1">
-                                <p className="text-[11px] font-bold text-[#8E8E93] uppercase tracking-widest">馬可樓辦公室電話 PHONE</p>
-                                <p className="text-[24px] font-black text-[#1C1C1E] tracking-tighter leading-none">{data.office.phone}</p>
-                            </div>
-                        </a>
+    <div className="space-y-4">
+        {/* 電話區塊（可點擊）：使用極淡的灰底 bg-gray-50，保留一點點點擊暗示 */}
+        <a href={`tel:${data.office.phone}`} 
+           className="flex items-start gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-200/70 active:bg-gray-200 transition-colors block cursor-pointer">
+            <Icon name="phone" size={18} className={`mt-1 shrink-0 transition-colors duration-500 ${
+                activeMainTab === 'worship' ? 'text-[#007AFF]' : activeMainTab === 'news' ? 'text-[#FF9500]' : 'text-[#34C759]'
+            }`} />
+            <div className="space-y-1">
+                <p className="text-[11px] font-bold text-[#8E8E93] uppercase tracking-widest">馬可樓辦公室電話 PHONE</p>
+                <p className="text-[24px] font-black text-[#1C1C1E] tracking-tighter leading-none">{data.office.phone}</p>
+            </div>
+        </a>
 
-                        {/* 地址區塊 */}
-                        <div className="flex items-start gap-3 p-4 bg-[#F2F2F7] rounded-2xl border border-gray-200/50 shadow-sm">
-                            {/* 地址的 pin icon 顏色同步改為動態切換 */}
-                            <Icon name="pin" size={18} className={`mt-0.5 shrink-0 transition-colors duration-500 ${
-                                activeMainTab === 'worship' ? 'text-[#007AFF]' : activeMainTab === 'news' ? 'text-[#FF9500]' : 'text-[#34C759]'
-                            }`} />
-                            <div className="space-y-1">
-                                <p className="text-[11px] font-bold text-[#8E8E93] uppercase tracking-widest">馬可樓辦公室地址 ADDRESS</p>
-                                <p className="text-[15px] font-bold text-[#1C1C1E] leading-snug">{data.office.address}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        {/* 地址區塊：改為透明底色、單純邊框 */}
+        <div className="flex items-start gap-3 p-4 bg-transparent rounded-2xl border border-gray-200/70">
+            <Icon name="pin" size={18} className={`mt-0.5 shrink-0 transition-colors duration-500 ${
+                activeMainTab === 'worship' ? 'text-[#007AFF]' : activeMainTab === 'news' ? 'text-[#FF9500]' : 'text-[#34C759]'
+            }`} />
+            <div className="space-y-1">
+                <p className="text-[11px] font-bold text-[#8E8E93] uppercase tracking-widest">馬可樓辦公室地址 ADDRESS</p>
+                <p className="text-[15px] font-bold text-[#1C1C1E] leading-snug">{data.office.address}</p>
+            </div>
+        </div>
+    </div>
+</div>
 
             </div>
             
