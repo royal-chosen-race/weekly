@@ -203,13 +203,13 @@
                                             {(data.schedule || []).map((item, idx) => {
                                                 const active = isTimeActive(item.start, item.end);
                                                 return (
-                                                    <div key={idx} className={`flex w-full items-center transition-all duration-300 ${active ? 'scale-105 origin-left' : ''}`}>
+                                                    <div key={idx} className={`flex w-full items-center transition-all duration-300 ${active ? 'scale-100 origin-left' : ''}`}>
                                                         <div className="flex items-center gap-4">
                                                             <div className={`w-3 h-3 rounded-full shrink-0 ${active ? 'bg-[#007AFF] animate-pulse-custom shadow-[0_0_12px_rgba(0,122,255,0.6)]' : 'bg-[#D1D1D6]'}`}></div>
-                                                            <span className={`text-[17px] font-bold font-mono  ${active ? 'text-[#007AFF]' : 'text-[#1C1C1E]'}`}>{item.task}</span>
+                                                            <span className={`text-[17px] font-bold  ${active ? 'text-[#007AFF]' : 'text-[#1C1C1E]'}`}>{item.task}</span>
                                                         </div>
                                                         {/* 改良：使用 ml-auto 搭配固定寬度與等寬數字，確保右側完美切齊 */}
-                                                        <span className={`text-[16px] font-bold font-mono tabular-nums text-right w-[110px] shrink-0 ml-auto tracking-tight ${active ? 'text-[#007AFF]' : 'text-[#8E8E93]'}`}>
+                                                        <span className={`text-[16px] font-bold tabular-nums text-right w-[110px] shrink-0 ml-auto tracking-tight ${active ? 'text-[#007AFF]' : 'text-[#8E8E93]'}`}>
                                                             {item.start}-{item.end}
                                                         </span>
                                                     </div>
