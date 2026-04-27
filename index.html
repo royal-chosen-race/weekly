@@ -16,16 +16,36 @@
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
         body { font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; background-color: #D1D1D6; }
         .backdrop-blur { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
-        @keyframes pulse-custom { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.1); } }
-        .animate-pulse-custom { animation: pulse-custom 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        
         svg { overflow: visible !important; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .sermon-content { white-space: pre-line; }
         .announcement-detail { white-space: pre-line; }
-        
-        @keyframes spin-slow { 100% { transform: rotate(360deg); } }
-        .loader { animation: spin-slow 1s linear infinite; }
+
+        /* Wavy Animation for active schedule */
+        @keyframes wave-bars {
+            0%, 100% { transform: scaleY(0.4); }
+            50% { transform: scaleY(1); }
+        }
+        .wave-bar {
+            width: 3px;
+            background-color: #007AFF;
+            border-radius: 2px;
+            animation: wave-bars 1s ease-in-out infinite;
+            transform-origin: bottom;
+            display: inline-block;
+        }
+        .wave-bar:nth-child(1) { height: 12px; animation-delay: 0s; }
+        .wave-bar:nth-child(2) { height: 16px; animation-delay: 0.2s; }
+        .wave-bar:nth-child(3) { height: 12px; animation-delay: 0.4s; }
+
+        /* Toast Animation */
+        @keyframes fade-in-up {
+            0% { opacity: 0; transform: translate(-50%, 10px); }
+            100% { opacity: 1; transform: translate(-50%, 0); }
+        }
+        .toast-enter { animation: fade-in-up 0.3s ease-out forwards; }
     </style>
 </head>
 <body class="text-[#1C1C1E]">
@@ -63,7 +83,10 @@
                 phone: <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />,
                 pin: <Fragment><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></Fragment>,
                 card: <Fragment><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20" /></Fragment>,
-                download: <Fragment><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></Fragment>
+                download: <Fragment><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></Fragment>,
+                copy: <Fragment><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></Fragment>,
+                share: <Fragment><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></Fragment>,
+                externalLink: <Fragment><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></Fragment>
             };
             return (
                 <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`inline-block ${className}`}>
@@ -95,21 +118,30 @@
             const [expandedSermon, setExpandedSermon] = useState(null);
             const [expandedNews, setExpandedNews] = useState(null);
             const [data, setData] = useState(null);
+            const [toast, setToast] = useState('');
 
+            // LocalStorage Caching & Firebase fetching
             useEffect(() => {
-                const timer = setInterval(() => setCurrentTime(new Date()), 10000);
-                return () => clearInterval(timer);
-            }, []);
+                // Check cache first to avoid waiting screen
+                const cachedData = localStorage.getItem('bulletin_data_cache');
+                if (cachedData) {
+                    setData(JSON.parse(cachedData));
+                }
 
-            useEffect(() => {
                 const bulletinRef = db.ref('bulletin_data');
                 bulletinRef.on('value', (snapshot) => {
                     const cloudData = snapshot.val();
                     if (cloudData) {
                         setData(cloudData);
+                        localStorage.setItem('bulletin_data_cache', JSON.stringify(cloudData));
                     }
                 });
                 return () => bulletinRef.off();
+            }, []);
+
+            useEffect(() => {
+                const timer = setInterval(() => setCurrentTime(new Date()), 10000);
+                return () => clearInterval(timer);
             }, []);
 
             const isTimeActive = (start, end) => {
@@ -123,27 +155,55 @@
                 window.open(url, '_blank', 'noopener,noreferrer');
             };
 
+            const copyToClipboard = (text) => {
+                navigator.clipboard.writeText(text).then(() => {
+                    setToast('帳號已複製');
+                    setTimeout(() => setToast(''), 2500);
+                });
+            };
+
+            const handleShare = async () => {
+                if (navigator.share) {
+                    try {
+                        await navigator.share({
+                            title: '風一族職場教會週報',
+                            text: '邀請您查看本週最新週報與聚會資訊！',
+                            url: window.location.href,
+                        });
+                    } catch (error) {
+                        console.log('分享失敗', error);
+                    }
+                } else {
+                    copyToClipboard(window.location.href);
+                    setToast('已複製週報連結');
+                }
+            };
+
             const cardStyle = "bg-white border border-gray-100/80 rounded-[2rem] shadow-sm overflow-hidden transition-all duration-300";
 
             if (!data) {
+                // Skeleton Screen
                 return (
-                    <div className="w-full min-h-screen flex items-center justify-center bg-[#E5E5EA]">
-                        <div className="flex flex-col items-center gap-4">
-                            <div className="w-12 h-12 border-4 border-gray-300 border-t-[#007AFF] rounded-full loader"></div>
-                            <p className="text-[14px] font-bold text-[#6C6C70] tracking-widest uppercase">準備聚會中...</p>
+                    <div className="w-full min-h-screen flex items-start justify-center bg-[#E5E5EA] pt-6 px-4 pb-20">
+                        <div className="w-full max-w-4xl space-y-6 animate-pulse">
+                            <div className="h-20 bg-gray-300/60 rounded-2xl w-full"></div>
+                            <div className="h-80 bg-gray-300/60 rounded-[2rem] w-full"></div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="h-64 bg-gray-300/60 rounded-[2rem]"></div>
+                                <div className="h-64 bg-gray-300/60 rounded-[2rem]"></div>
+                            </div>
                         </div>
                     </div>
                 );
             }
 
-            // 根據 activeMainTab 決定背景色
+            // Changed Green #34C759 to #34C759 (Tailwind green-700) for better contrast
             const themeColorClass = activeMainTab === 'worship' ? 'text-[#007AFF]' : activeMainTab === 'news' ? 'text-[#FF9500]' : 'text-[#34C759]';
             const themeBgClass = activeMainTab === 'worship' ? 'bg-[#007AFF]' : activeMainTab === 'news' ? 'bg-[#FF9500]' : 'bg-[#34C759]';
             const themeLightBgClass = activeMainTab === 'worship' ? 'bg-[#007AFF]/10' : activeMainTab === 'news' ? 'bg-[#FF9500]/10' : 'bg-[#34C759]/10';
 
             return (
                 <div className="w-full min-h-screen flex justify-center bg-[#E5E5EA]">
-                    {/* ===== 響應式容器：取消 max-w-md 限制，改用 max-w-4xl 供平板/電腦使用 ===== */}
                     <div className={`w-full max-w-4xl min-h-screen relative shadow-2xl hide-scrollbar pb-36 md:pb-10 transition-colors duration-700 ${
                         activeMainTab === 'worship' ? 'bg-blue-50' : activeMainTab === 'news' ? 'bg-[#FFF7ED]' : 'bg-[#F0FDF4]'
                     }`}>
@@ -152,10 +212,12 @@
                             <div className="flex justify-between items-center mb-1">
                                 <h1 className="text-xl md:text-2xl font-bold tracking-tight text-[#1C1C1E]">風一族職場教會</h1>
                                 <div className="flex gap-3 items-center">
-                                    <span className={`text-xs md:text-sm font-bold px-3 py-1 rounded-full transition-colors duration-500 ${themeColorClass} ${themeLightBgClass}`}>
+                                    <button onClick={handleShare} className="flex items-center gap-1.5 text-xs md:text-sm font-bold text-[#48484A] bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full transition-colors duration-300">
+                                        <Icon name="share" size={14} /> <span className="hidden sm:inline">分享此週報</span>
+                                    </button>
+                                    <span className={`text-xs md:text-sm font-bold px-3 py-1.5 rounded-full transition-colors duration-500 ${themeColorClass} ${themeLightBgClass}`}>
                                         {data.bulletinDate.slice(5)} {data.weekNumber}
                                     </span>
-                                    {/* 電腦版：下載按鈕顯示在右上角 */}
                                     {data?.pdfDownloadUrl && (
                                         <a 
                                             href={data.pdfDownloadUrl} 
@@ -175,7 +237,6 @@
                             </p>
                         </header>
 
-                        {/* 電腦/平板版：頂部導覽列 (取代手機版的底部 Tab) */}
                         <div className="hidden md:flex sticky top-[73px] z-30 bg-white/80 backdrop-blur-md border-b border-gray-200/50 px-6 py-3 gap-4">
                             {[
                                 { id: 'worship', label: '主日聚會', icon: 'church', activeBg: 'bg-[#007AFF]' },
@@ -191,10 +252,8 @@
                             ))}
                         </div>
 
-                        {/* ===== 內容區 (Grid 響應式佈局) ===== */}
                         <div className="p-5 space-y-6">
                             
-                            {/* 主題資訊 (永遠佔滿寬度) */}
                             <section>
                                 <div className={`${cardStyle} p-7 md:p-10 border-none bg-gradient-to-br from-white to-[#F9F9F9] relative overflow-hidden`}>
                                     <div className="relative z-10">
@@ -211,7 +270,8 @@
                                         <button onClick={() => setVerseOpen(!verseOpen)} className="w-full md:w-auto md:px-8 py-3.5 bg-[#F2F2F7] rounded-xl flex items-center justify-center gap-3 text-[15px] font-bold text-[#1C1C1E] active:scale-[0.98] transition-all hover:bg-gray-200">
                                             <span>本週經文</span><Icon name="chevronDown" size={16} className={`transition-transform duration-300 ${verseOpen ? 'rotate-180' : ''}`} />
                                         </button>
-                                        {verseOpen && <div className="mt-4 p-4 md:p-6 bg-white/80 rounded-xl border border-gray-100 text-[15px] md:text-[16px] leading-relaxed text-[#48484A] italic">{data.theme.scripture}</div>}
+                                        {/* Adjusted Typograpy for Scripture */}
+                                        {verseOpen && <div className="mt-4 p-4 md:p-6 bg-white/80 rounded-xl border border-gray-100 text-[15px] md:text-[16px] leading-loose font-normal text-[#48484A] italic">{data.theme.scripture}</div>}
                                     </div>
                                     <div 
                                         className="absolute top-0 right-0 w-64 h-64 md:w-96 md:h-96 -mr-24 -mt-24 pointer-events-none transition-colors duration-700"
@@ -220,18 +280,16 @@
                                                 ? 'radial-gradient(circle, rgba(0, 122, 255, 0.2) 0%, rgba(0, 122, 255, 0) 70%)' 
                                                 : activeMainTab === 'news' 
                                                 ? 'radial-gradient(circle, rgba(255, 149, 0, 0.15) 0%, rgba(255, 149, 0, 0) 70%)' 
-                                                : 'radial-gradient(circle, rgba(52, 199, 89, 0.15) 0%, rgba(52, 199, 89, 0) 70%)'
+                                                : 'radial-gradient(circle, rgba(21, 128, 61, 0.15) 0%, rgba(21, 128, 61, 0) 70%)'
                                         }}
                                     ></div>
                                 </div>
                             </section>
 
-                            {/* 動態分頁內容 */}
                             <main>
                                 {activeMainTab === 'worship' && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                                         
-                                        {/* 左欄：大綱 */}
                                         <div className={`${cardStyle} p-6 md:p-8 col-span-1 md:col-span-2 lg:col-span-1 lg:row-span-2`}>
                                             <h3 className="text-xs font-black text-[#8E8E93] uppercase tracking-[0.2em] mb-5">信息大綱 OUTLINE</h3>
                                             <div className="space-y-4">
@@ -244,7 +302,8 @@
                                                         {expandedSermon === idx && (
                                                             <div className="px-5 pb-5 pt-1 space-y-4">
                                                                 {(item.content || []).map((p, pi) => (
-                                                                    <p key={pi} className="text-[15px] text-[#48484A] leading-relaxed">
+                                                                    // Adjusted Typograpy for outline
+                                                                    <p key={pi} className="text-[15px] font-normal text-[#48484A] leading-relaxed">
                                                                         <MultilineText text={p} />
                                                                     </p>
                                                                 ))}
@@ -255,7 +314,6 @@
                                             </div>
                                         </div>
 
-                                        {/* 右欄：流程與詩歌 */}
                                         <div className="space-y-6 col-span-1 lg:col-span-1">
                                             <div className={`${cardStyle} p-7 md:p-8`}>
                                                 <h3 className="text-xs font-black text-[#8E8E93] uppercase tracking-[0.2em] mb-6">聚會流程 SCHEDULE</h3>
@@ -265,7 +323,17 @@
                                                         return (
                                                             <div key={idx} className={`flex w-full items-center transition-all duration-300 ${active ? 'scale-105 md:scale-100 origin-left' : ''}`}>
                                                                 <div className="flex items-center gap-4">
-                                                                    <div className={`w-3 h-3 rounded-full shrink-0 ${active ? 'bg-[#007AFF] animate-pulse-custom shadow-[0_0_12px_rgba(0,122,255,0.6)]' : 'bg-[#D1D1D6]'}`}></div>
+                                                                    {/* Wavy Animation added here */}
+                                                                    <div className={`w-4 h-4 flex items-center justify-center shrink-0 ${active ? '' : 'hidden'}`}>
+                                                                        <div className="flex gap-[2px] items-end h-full">
+                                                                            <div className="wave-bar"></div>
+                                                                            <div className="wave-bar"></div>
+                                                                            <div className="wave-bar"></div>
+                                                                        </div>
+                                                                    </div>
+                                                                    {/* Default inactive dot */}
+                                                                    {!active && <div className="w-3 h-3 rounded-full shrink-0 bg-[#D1D1D6] ml-0.5"></div>}
+                                                                    
                                                                     <span className={`text-[17px] font-bold  ${active ? 'text-[#007AFF]' : 'text-[#1C1C1E]'}`}>{item.task}</span>
                                                                 </div>
                                                                 <span className={`text-[16px] font-bold tabular-nums text-right w-[110px] shrink-0 ml-auto tracking-tight ${active ? 'text-[#007AFF]' : 'text-[#8E8E93]'}`}>
@@ -311,7 +379,8 @@
                                                         </button>
                                                         {expandedNews === idx && (
                                                             <div className="px-5 pb-5 pt-1">
-                                                                <p className="text-[15px] text-[#48484A] leading-relaxed">
+                                                                {/* Adjusted Typography for Announcements */}
+                                                                <p className="text-[15px] font-normal text-[#48484A] leading-relaxed">
                                                                     <MultilineText text={item.detail} />
                                                                 </p>
                                                             </div>
@@ -383,13 +452,17 @@
                                             <h4 className="text-xs font-black uppercase tracking-[0.2em]">奉獻帳戶資訊</h4>
                                         </div>
                                         <div className="space-y-4">
-                                            <div className="flex items-start gap-3 p-4 bg-transparent rounded-2xl border border-gray-200/70">
-                                                <Icon name="card" size={18} className={`mt-1 shrink-0 transition-colors duration-500 ${themeColorClass}`} />
-                                                <div className="space-y-1">
-                                                    <p className="text-[11px] font-bold text-[#8E8E93] uppercase tracking-widest">{data.offering.bank}</p>
-                                                    <p className="text-[20px] sm:text-[24px] font-black text-[#1C1C1E] tracking-tighter leading-none">{data.offering.account}</p>
+                                            {/* Changed Offering Account Box to be interactive with copy functionality */}
+                                            <button onClick={() => copyToClipboard(data.offering.account)} className="w-full flex items-start justify-between gap-3 p-4 bg-transparent rounded-2xl border border-gray-200/70 hover:bg-gray-50 active:bg-gray-100 transition-colors text-left group">
+                                                <div className="flex items-start gap-3">
+                                                    <Icon name="card" size={18} className={`mt-1 shrink-0 transition-colors duration-500 ${themeColorClass}`} />
+                                                    <div className="space-y-1">
+                                                        <p className="text-[11px] font-bold text-[#8E8E93] uppercase tracking-widest">{data.offering.bank}</p>
+                                                        <p className="text-[20px] sm:text-[24px] font-black text-[#1C1C1E] tracking-tighter leading-none">{data.offering.account}</p>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                                <Icon name="copy" size={16} className="text-gray-300 group-hover:text-[#007AFF] transition-colors mt-2" />
+                                            </button>
                                             <div className="flex items-start gap-3 p-4 bg-transparent rounded-2xl border border-gray-200/70">
                                                 <Icon name="users" size={18} className={`mt-0.5 shrink-0 transition-colors duration-500 ${themeColorClass}`} />
                                                 <div className="space-y-1">
@@ -413,25 +486,30 @@
                                                     <p className="text-[24px] font-black text-[#1C1C1E] tracking-tighter leading-none">{data.office.phone}</p>
                                                 </div>
                                             </a>
-                                            <div className="flex items-start gap-3 p-4 bg-transparent rounded-2xl border border-gray-200/70">
-                                                <Icon name="pin" size={18} className={`mt-0.5 shrink-0 transition-colors duration-500 ${themeColorClass}`} />
-                                                <div className="space-y-1">
-                                                    <p className="text-[11px] font-bold text-[#8E8E93] uppercase tracking-widest">馬可樓辦公室地址 ADDRESS</p>
-                                                    <p className="text-[15px] font-bold text-[#1C1C1E] leading-snug">{data.office.address}</p>
+                                            {/* Modified to correct Google Maps Search API link */}
+                                            <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.office.address)}`} target="_blank" rel="noopener noreferrer" className="flex items-start justify-between gap-3 p-4 bg-transparent rounded-2xl border border-gray-200/70 hover:bg-gray-50 transition-colors group">
+                                                <div className="flex items-start gap-3">
+                                                    <Icon name="pin" size={18} className={`mt-0.5 shrink-0 transition-colors duration-500 ${themeColorClass}`} />
+                                                    <div className="space-y-1">
+                                                        <p className="text-[11px] font-bold text-[#8E8E93] uppercase tracking-widest">馬可樓辦公室地址 ADDRESS</p>
+                                                        <p className="text-[15px] font-bold text-[#1C1C1E] leading-snug">{data.office.address}</p>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                                {/* Modified to externalLink */}
+                                                <Icon name="externalLink" size={16} className="text-gray-300 group-hover:text-[#007AFF] mt-1 shrink-0 transition-colors" />
+                                            </a>
                                         </div>
                                     </div>
                                 </div>
                                 
                                 <div className="relative z-20 flex flex-wrap justify-center items-center gap-x-6 gap-y-4 mb-10">
-                                    <a href="https://royal-chosen-race.com/" target="_blank" rel="noopener noreferrer" onClick={(e) => handleExternalLink(e, 'https://royal-chosen-race.com/')} className="flex items-center gap-1.5 text-[14px] font-bold text-[#007AFF] hover:opacity-70 active:opacity-50 transition-opacity cursor-pointer px-2 py-1">
+                                    <a href="https://royal-chosen-race.com/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[14px] font-bold text-[#007AFF] hover:opacity-70 active:opacity-50 transition-opacity px-2 py-1">
                                         <Icon name="globe" size={16} /> 官方網站
                                     </a>
-                                    <a href="https://reurl.cc/epkgeW" target="_blank" rel="noopener noreferrer" onClick={(e) => handleExternalLink(e, 'https://reurl.cc/epkgeW')} className="flex items-center gap-1.5 text-[14px] font-bold text-[#AF52DE] hover:opacity-70 active:opacity-50 transition-opacity cursor-pointer px-2 py-1">
+                                    <a href="https://reurl.cc/epkgeW" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[14px] font-bold text-[#AF52DE] hover:opacity-70 active:opacity-50 transition-opacity px-2 py-1">
                                         <Icon name="plus" size={16} /> 新人名單
                                     </a>
-                                    <a href="https://reurl.cc/0mWG5A" target="_blank" rel="noopener noreferrer" onClick={(e) => handleExternalLink(e, 'https://reurl.cc/0mWG5A')} className="flex items-center gap-1.5 text-[14px] font-bold text-[#FF2D55] hover:opacity-70 active:opacity-50 transition-opacity cursor-pointer px-2 py-1">
+                                    <a href="https://reurl.cc/0mWG5A" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[14px] font-bold text-[#FF2D55] hover:opacity-70 active:opacity-50 transition-opacity px-2 py-1">
                                         <Icon name="message" size={16} /> 聚會回饋
                                     </a>
                                 </div>
@@ -442,10 +520,8 @@
                             </footer>
                         </div>
 
-                        {/* ===== 手機版限定：底部 Floating Tab 與 下載按鈕 ===== */}
+                        {/* Mobile Floating Bar */}
                         <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-[448px] px-4 z-50 flex items-center gap-2.5">
-                            
-                            {/* 1. 主導覽列 */}
                             <div className="flex-1 bg-white/85 backdrop-blur-xl border border-gray-200/60 rounded-[2rem] shadow-[0_10px_40px_rgba(0,0,0,0.1)] p-1.5 flex gap-1 justify-center">
                                 {[
                                     { id: 'worship', label: '主日聚會', icon: 'church', activeBg: 'bg-[#007AFF]' },
@@ -460,8 +536,7 @@
                                     </button>
                                 ))}
                             </div>
-
-                            {/* 2. PDF 下載按鈕 (併排與正圓形) */}
+                            
                             {data?.pdfDownloadUrl && (
                                 <a 
                                     href={data.pdfDownloadUrl} 
@@ -470,14 +545,22 @@
                                     className={`shrink-0 w-[4rem] h-[4rem] rounded-full flex items-center justify-center transition-all duration-300 text-white active:scale-95 hover:scale-105 ${
                                         activeMainTab === 'worship' ? 'bg-[#007AFF] shadow-[0_10px_25px_rgba(0,122,255,0.4)]' :
                                         activeMainTab === 'news' ? 'bg-[#FF9500] shadow-[0_10px_25px_rgba(255,149,0,0.4)]' :
-                                        'bg-[#34C759] shadow-[0_10px_25px_rgba(52,199,89,0.4)]'
+                                        'bg-[#34C759] shadow-[0_10px_25px_rgba(21,128,61,0.4)]'
                                     }`}
                                 >
                                     <Icon name="download" size={24} />
                                 </a>
                             )}
-                            
                         </div>
+
+                        {/* Global Toast Component */}
+                        {toast && (
+                            <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 toast-enter">
+                                <div className="bg-[#1C1C1E] text-white px-5 py-2.5 rounded-full text-sm font-bold shadow-lg flex items-center gap-2">
+                                    <Icon name="copy" size={16} /> {toast}
+                                </div>
+                            </div>
+                        )}
 
                     </div>
                 </div>
