@@ -145,10 +145,17 @@
             }, []);
 
             const isTimeActive = (start, end) => {
-                const parseMins = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
-                const nowMins = currentTime.getHours() * 60 + currentTime.getMinutes();
-                return nowMins >= parseMins(start) && nowMins < parseMins(end);
-            };
+    // 1. 判斷今天是不是週日 (0 代表週日，1-6 代表週一到週六)
+    const isSunday = currentTime.getDay() === 0;
+    
+    // 2. 如果不是週日，直接回傳 false (不觸發藍色高亮與波浪動畫)
+    if (!isSunday) return false;
+
+    // 3. 如果是週日，才繼續判斷時間是否吻合
+    const parseMins = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+    const nowMins = currentTime.getHours() * 60 + currentTime.getMinutes();
+    return nowMins >= parseMins(start) && nowMins < parseMins(end);
+};
 
             const copyToClipboard = (text) => {
                 navigator.clipboard.writeText(text).then(() => {
