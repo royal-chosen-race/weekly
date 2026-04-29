@@ -1,6 +1,6 @@
 # 風一族線上週報系統 (Royal Chosen Race Weekly)
 
-這是一個基於 GitHub Pages 構建的靜態網站，專門用於存放與展示「君尊皇族」團體的每週訊息、主日摘要及相關活動資訊。
+這是一個基於 GitHub Pages 構建的靜態網站，專門用於存放與展示「風一族職場教會」的每週訊息、主日摘要及相關活動資訊。
 
 ## 🌐 網站資訊
 * **網站網址：** [https://royal-chosen-race.github.io/weekly/](https://royal-chosen-race.github.io/weekly/)
