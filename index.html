@@ -318,9 +318,10 @@
             const currentMonth = currentTime.getMonth() + 1;
             
             // 是否為特殊的月份 (保留 4 月測試用)
-            const isSpecialMonth = currentMonth === 5 || currentMonth === 12;
+            // 🚨 確認沒問題後，請把「currentMonth === 4」刪除，恢復成 `currentMonth === 5` 和 `currentMonth === 12` 喔！
+            const isSpecialMonth = currentMonth === 5 || currentMonth === 4 || currentMonth === 12;
 
-            const isMay = seasonalEnabled && (currentMonth === 5); 
+            const isMay = seasonalEnabled && (currentMonth === 5 || currentMonth === 4); 
             const isDec = seasonalEnabled && currentMonth === 12;
 
             let outerBgClass = '';
