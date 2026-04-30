@@ -410,7 +410,7 @@
                                     {data?.pdfDownloadUrl && (
                                         <a 
                                             href={data.pdfDownloadUrl} 
-                                            target="_blank" 
+                                            download="風一族職場教會週報.pdf"
                                             rel="noopener noreferrer"
                                             className={`hidden md:flex items-center justify-center w-9 h-9 rounded-full text-white transition-all duration-300 hover:scale-110 ${themeBgClass} shadow-md`}
                                             title="下載週報 PDF"
@@ -809,7 +809,7 @@
                             {data?.pdfDownloadUrl && (
                                 <a 
                                     href={data.pdfDownloadUrl} 
-                                    target="_blank" 
+                                    download="風一族職場教會週報.pdf" 
                                     rel="noopener noreferrer"
                                     className={`shrink-0 w-[4.25rem] h-[4.25rem] rounded-full flex items-center justify-center transition-all duration-300 text-white active:scale-95 hover:scale-105 shadow-lg ${
                                         isMay ? 'bg-[#FF4D85] shadow-[#FF4D85]/40' :
