@@ -616,12 +616,19 @@
                                                             </div>
                                                         </button>
                                                         {isNewsOpen && (
-                                                            <div className={`px-6 pb-6 pt-2 border-t mt-1 mx-4 ${themeScriptureBorderClass}`}>
-                                                                <div className={`${textMd} font-normal text-[#48484A] leading-relaxed mt-3 transition-all duration-300`}>
-                                                                    <MultilineText text={item.detail} />
-                                                                </div>
-                                                            </div>
-                                                        )}
+    <div className={`px-6 pb-6 pt-2 border-t mt-1 mx-4 ${themeScriptureBorderClass}`}>
+        <ul className={`${textMd} font-normal text-[#48484A] leading-relaxed mt-3 transition-all duration-300 list-disc pl-5 space-y-2.5 marker:text-gray-400`}>
+            {item.detail.split('\n').map((line, li) => {
+                if (!line.trim()) return null; // 略過空行
+                
+                // 移除同工可能在後台手動輸入的項目符號 (例如 -, *, ・)，避免前台出現「兩個點」
+                const cleanLine = line.replace(/^[\-\*・]\s*/, '');
+                
+                return <li key={li} className="pl-1 text-justify">{cleanLine}</li>;
+            })}
+        </ul>
+    </div>
+)}
                                                     </div>
                                                 )
                                             })}
