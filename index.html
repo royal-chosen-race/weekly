@@ -68,6 +68,83 @@
         }
         const db = firebase.database();
 
+
+        // 前台也必須補齊舊資料／不完整資料，否則任一巢狀欄位缺少時會直接造成 React 白屏。
+        const DEFAULT_DATA = {
+            bulletinDate: "2026-04-26",
+            weekNumber: "第四週",
+            vision: "敬畏神，一無所懼",
+            theme: {
+                title: "神坐著為王：一無所懼，一無所缺",
+                speaker: "葉志偉 牧師",
+                moderator: "李宜潔 傳道",
+                scripture: "馬太福音 28/19-20"
+            },
+            sermonOutline: [],
+            songs: { worship: [], response: [] },
+            schedule: [],
+            groups: { weekday: [], sunday: [], special: [] },
+            overseas: [],
+            announcements: [],
+            offering: {
+                name: "社團法人中華基督教風一族職場福音協會",
+                bank: "華南銀行 (008)",
+                account: "101-10-007255-0"
+            },
+            office: {
+                phone: "(02) 8772-7857",
+                address: "台北市大安區市民大道三段 148 號 4 樓"
+            }
+        };
+
+        const normalizeData = (cloudData = {}) => {
+            const safeObject = (value, fallback = {}) =>
+                value && typeof value === 'object' && !Array.isArray(value) ? value : fallback;
+            const safeArray = (value, fallback = []) => Array.isArray(value) ? value : fallback;
+            const source = safeObject(cloudData, {});
+
+            const normalized = {
+                ...DEFAULT_DATA,
+                ...source,
+                theme: { ...DEFAULT_DATA.theme, ...safeObject(source.theme, {}) },
+                songs: { ...DEFAULT_DATA.songs, ...safeObject(source.songs, {}) },
+                groups: { ...DEFAULT_DATA.groups, ...safeObject(source.groups, {}) },
+                offering: { ...DEFAULT_DATA.offering, ...safeObject(source.offering, {}) },
+                office: { ...DEFAULT_DATA.office, ...safeObject(source.office, {}) }
+            };
+
+            normalized.bulletinDate = typeof normalized.bulletinDate === 'string' ? normalized.bulletinDate : '';
+            normalized.weekNumber = typeof normalized.weekNumber === 'string' ? normalized.weekNumber : '';
+            normalized.vision = typeof normalized.vision === 'string' ? normalized.vision : '';
+
+            normalized.sermonOutline = safeArray(normalized.sermonOutline).map(item => ({
+                title: typeof item?.title === 'string' ? item.title : '',
+                content: safeArray(item?.content).map(value => String(value ?? ''))
+            }));
+
+            normalized.schedule = safeArray(normalized.schedule).map(item => ({
+                start: typeof item?.start === 'string' ? item.start : '',
+                end: typeof item?.end === 'string' ? item.end : '',
+                task: typeof item?.task === 'string' ? item.task : ''
+            }));
+
+            normalized.announcements = safeArray(normalized.announcements).map((item, index) => ({
+                id: item?.id ?? `announcement-${index}`,
+                title: typeof item?.title === 'string' ? item.title : '',
+                date: typeof item?.date === 'string' ? item.date : '',
+                detail: typeof item?.detail === 'string' ? item.detail : ''
+            }));
+
+            normalized.songs.worship = safeArray(normalized.songs.worship).map(value => String(value ?? ''));
+            normalized.songs.response = safeArray(normalized.songs.response).map(value => String(value ?? ''));
+            normalized.groups.weekday = safeArray(normalized.groups.weekday);
+            normalized.groups.sunday = safeArray(normalized.groups.sunday);
+            normalized.groups.special = safeArray(normalized.groups.special);
+            normalized.overseas = safeArray(normalized.overseas);
+
+            return normalized;
+        };
+
         const Icon = ({ name, size = 18, className = "" }) => {
             const icons = {
                 book: <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14z" />,
@@ -104,7 +181,8 @@ clock: <Fragment><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" /></Fragm
                 download: <Fragment><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></Fragment>,
                 copy: <Fragment><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></Fragment>,
                 share: <Fragment><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></Fragment>,
-                externalLink: <Fragment><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></Fragment>
+                externalLink: <Fragment><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></Fragment>,
+                chevronDown: <polyline points="6 9 12 15 18 9" />
             };
             return (
                 <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`inline-block ${className}`}>
@@ -237,26 +315,46 @@ clock: <Fragment><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" /></Fragm
             const [expandedNewsList, setExpandedNewsList] = useState([]);
             
             const [data, setData] = useState(null);
+            const [loadError, setLoadError] = useState('');
             const [toast, setToast] = useState('');
             const [fontSize, setFontSize] = useState('normal'); 
             
             const [seasonalEnabled, setSeasonalEnabled] = useState(true);
 
             useEffect(() => {
+                let hasUsableCache = false;
                 const cachedData = localStorage.getItem('bulletin_data_cache');
+
                 if (cachedData) {
-                    setData(JSON.parse(cachedData));
+                    try {
+                        const normalizedCache = normalizeData(JSON.parse(cachedData));
+                        setData(normalizedCache);
+                        hasUsableCache = true;
+                    } catch (error) {
+                        console.warn('週報快取格式錯誤，已清除：', error);
+                        localStorage.removeItem('bulletin_data_cache');
+                    }
                 }
 
                 const bulletinRef = db.ref('bulletin_data');
-                bulletinRef.on('value', (snapshot) => {
-                    const cloudData = snapshot.val();
-                    if (cloudData) {
-                        setData(cloudData);
-                        localStorage.setItem('bulletin_data_cache', JSON.stringify(cloudData));
-                    }
-                });
-                return () => bulletinRef.off();
+                const handleValue = (snapshot) => {
+                    const normalizedCloudData = normalizeData(snapshot.val() || DEFAULT_DATA);
+                    setData(normalizedCloudData);
+                    setLoadError('');
+                    localStorage.setItem('bulletin_data_cache', JSON.stringify(normalizedCloudData));
+                };
+                const handleError = (error) => {
+                    console.error('Firebase 週報讀取失敗：', error);
+                    setLoadError(
+                        error?.code === 'PERMISSION_DENIED'
+                            ? 'Firebase 拒絕前台讀取。請確認 Realtime Database Rules 已允許 bulletin_data 公開讀取。'
+                            : `週報資料讀取失敗：${error?.message || '未知錯誤'}`
+                    );
+                    if (!hasUsableCache) setData(null);
+                };
+
+                bulletinRef.on('value', handleValue, handleError);
+                return () => bulletinRef.off('value', handleValue);
             }, []);
 
             useEffect(() => {
@@ -268,9 +366,16 @@ clock: <Fragment><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" /></Fragm
                 const isSunday = currentTime.getDay() === 0;
                 if (!isSunday) return false;
 
-                const parseMins = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+                const parseMins = (t = '') => {
+                    if (typeof t !== 'string' || !/^\d{1,2}:\d{2}$/.test(t)) return null;
+                    const [h, m] = t.split(':').map(Number);
+                    return Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : null;
+                };
+                const startMins = parseMins(start);
+                const endMins = parseMins(end);
+                if (startMins === null || endMins === null) return false;
                 const nowMins = currentTime.getHours() * 60 + currentTime.getMinutes();
-                return nowMins >= parseMins(start) && nowMins < parseMins(end);
+                return nowMins >= startMins && nowMins < endMins;
             };
 
             const copyToClipboard = (text) => {
@@ -326,6 +431,18 @@ clock: <Fragment><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" /></Fragm
             }
 
             if (!data) {
+                if (loadError) {
+                    return (
+                        <div className={`w-full min-h-screen flex items-center justify-center px-5 transition-colors duration-300 ${outerBgClass}`}>
+                            <div className="w-full max-w-xl rounded-[2rem] bg-white border border-red-200 shadow-xl p-8 text-center">
+                                <div className="text-4xl mb-4">⚠️</div>
+                                <h1 className="text-xl font-black text-[#1C1C1E] mb-3">週報目前無法載入</h1>
+                                <p className="text-sm leading-relaxed text-[#6C6C70]">{loadError}</p>
+                            </div>
+                        </div>
+                    );
+                }
+
                 return (
                     <div className={`w-full min-h-screen flex items-start justify-center pt-6 px-4 pb-20 transition-colors duration-300 ${outerBgClass}`}>
                         <div className="w-full max-w-4xl lg:max-w-6xl space-y-6 animate-pulse">
@@ -339,6 +456,8 @@ clock: <Fragment><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" /></Fragm
                     </div>
                 );
             }
+
+            const safeData = normalizeData(data);
 
             let themeColorClass = '';
             let themeBgClass = '';
@@ -406,6 +525,12 @@ clock: <Fragment><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" /></Fragm
                     
                     <SeasonalEffects isMay={isMay} isDec={isDec} />
 
+                    {loadError && (
+                        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[70] w-[calc(100%-2rem)] max-w-2xl rounded-2xl bg-amber-50 border border-amber-300 px-4 py-3 text-center text-xs font-bold text-amber-900 shadow-lg">
+                            目前顯示裝置中的快取資料。{loadError}
+                        </div>
+                    )}
+
                     <div className={`w-full max-w-4xl lg:max-w-6xl min-h-screen relative z-30 shadow-2xl hide-scrollbar pb-36 md:pb-10 transition-colors duration-300 ${mainContentBgClass}`}>
 
                         <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-gray-200/50 px-5 py-3 md:px-6 md:py-4">
@@ -413,7 +538,7 @@ clock: <Fragment><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" /></Fragm
                                 <div className="flex flex-wrap items-center gap-2 md:gap-3 mt-1 md:mt-0">
                                     <h1 className={`${textH1} font-black tracking-tight text-[#1C1C1E] whitespace-nowrap transition-all duration-300`}>風一族職場教會</h1>
                                     <span className={`${textMicro} font-bold px-2.5 py-0.5 rounded-full whitespace-nowrap transition-all duration-300 ${themeColorClass} ${themeLightBgClass}`}>
-                                        {data.bulletinDate.slice(5)} {data.weekNumber}
+                                        {safeData.bulletinDate.slice(5)} {safeData.weekNumber}
                                     </span>
                                 </div>
                                 
@@ -441,7 +566,7 @@ clock: <Fragment><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" /></Fragm
                             <div className="flex justify-start items-center">
                                 <p className={`${textXs} text-[#6C6C70] font-medium flex items-center gap-2 transition-all duration-300`}>
                                     <span className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full transition-colors duration-300 ${themeBgClass}`}></span>
-                                    2026年度異象：{data.vision}
+                                    2026年度異象：{safeData.vision}
                                 </p>
                             </div>
                         </header>
@@ -477,11 +602,11 @@ clock: <Fragment><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" /></Fragm
                                             <Icon name="book" size={22} />
                                             <span className={`${textXs} font-black tracking-widest uppercase transition-all duration-0`}>信息主題</span>
                                         </div>
-                                        <h2 className={`${textH2} lg:text-[44px] font-black text-[#1C1C1E] mb-6 tracking-normal leading-snug transition-all duration-300`}>{data.theme.title}</h2>
+                                        <h2 className={`${textH2} lg:text-[44px] font-black text-[#1C1C1E] mb-6 tracking-normal leading-snug transition-all duration-300`}>{safeData.theme.title}</h2>
                                         <div className="flex gap-6 mb-6">
-                                            <div className="space-y-1"><p className={`${textXs} text-[#8E8E93] font-bold uppercase tracking-wider transition-all duration-300`}>講員</p><p className={`${textLg} font-bold text-[#1C1C1E] transition-all duration-300`}>{data.theme.speaker}</p></div>
+                                            <div className="space-y-1"><p className={`${textXs} text-[#8E8E93] font-bold uppercase tracking-wider transition-all duration-300`}>講員</p><p className={`${textLg} font-bold text-[#1C1C1E] transition-all duration-300`}>{safeData.theme.speaker}</p></div>
                                             <div className="w-[1px] h-10 md:h-12 bg-gray-200"></div>
-                                            <div className="space-y-1"><p className={`${textXs} text-[#8E8E93] font-bold uppercase tracking-wider transition-all duration-300`}>司會</p><p className={`${textLg} font-bold text-[#1C1C1E] transition-all duration-300`}>{data.theme.moderator}</p></div>
+                                            <div className="space-y-1"><p className={`${textXs} text-[#8E8E93] font-bold uppercase tracking-wider transition-all duration-300`}>司會</p><p className={`${textLg} font-bold text-[#1C1C1E] transition-all duration-300`}>{safeData.theme.moderator}</p></div>
                                         </div>
                                         
                                         <button type="button" onClick={() => setVerseOpen(!verseOpen)} className="w-full md:w-auto md:px-8 py-3.5 bg-[#F2F2F7] rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all hover:bg-gray-200 group">
@@ -492,7 +617,7 @@ clock: <Fragment><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" /></Fragm
                                         
                                         {verseOpen && 
                                             <div className={`mt-4 p-5 md:p-6 lg:p-8 rounded-2xl border-l-4 shadow-inner text-[#444] tracking-wide leading-loose transition-all duration-300 ${themeScriptureBgClass} ${themeScriptureBorderClass} ${textMd} font-medium`}>
-                                                <MultilineText text={data.theme.scripture} />
+                                                <MultilineText text={safeData.theme.scripture} />
                                             </div>
                                         }
                                     </div>
@@ -510,7 +635,7 @@ clock: <Fragment><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" /></Fragm
                                         <div className={`${cardStyle} p-6 md:p-8 col-span-1 lg:col-span-7 xl:col-span-8 lg:row-span-2`}>
                                             <h3 className={`${textH3} font-black text-[#8E8E93] uppercase tracking-[0.2em] mb-5 transition-all duration-300`}>信息大綱 OUTLINE</h3>
                                             <div className="space-y-4">
-                                                {(data.sermonOutline || []).map((item, idx) => {
+                                                {(safeData.sermonOutline || []).map((item, idx) => {
                                                     const isSermonOpen = expandedSermons.includes(idx);
                                                     
                                                     return (
@@ -551,7 +676,7 @@ clock: <Fragment><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" /></Fragm
                                             <div className={`${cardStyle} p-7 md:p-8 flex-1`}>
                                                 <h3 className={`${textH3} font-black text-[#8E8E93] uppercase tracking-[0.2em] mb-6 transition-all duration-300`}>聚會流程 SCHEDULE</h3>
                                                 <div className="space-y-6">
-                                                    {(data.schedule || []).map((item, idx) => {
+                                                    {(safeData.schedule || []).map((item, idx) => {
                                                         const active = isTimeActive(item.start, item.end);
                                                         return (
                                                             <div key={idx} className="flex w-full items-start transition-all duration-300">
@@ -584,11 +709,11 @@ clock: <Fragment><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" /></Fragm
                                                 <div className="grid grid-cols-2 gap-6">
                                                     <div>
                                                         <p className={`${textXs} font-bold px-3 py-1 rounded-full mb-4 inline-block transition-all duration-300 ${themeColorClass} ${themeLightBgClass}`}>敬拜歌曲</p>
-                                                        <div className="space-y-3">{(data.songs.worship || []).map((s, i) => <p key={i} className={`${textMd} font-bold text-[#1C1C1E] leading-tight transition-all duration-300`}>・{s}</p>)}</div>
+                                                        <div className="space-y-3">{(safeData.songs.worship || []).map((s, i) => <p key={i} className={`${textMd} font-bold text-[#1C1C1E] leading-tight transition-all duration-300`}>・{s}</p>)}</div>
                                                     </div>
                                                     <div className="pl-6 border-l border-gray-100">
                                                         <p className={`${textXs} font-bold px-3 py-1 rounded-full mb-4 inline-block transition-all duration-300 ${isMay || isDec ? themeColorClass + ' ' + themeLightBgClass : 'text-[#34C759] bg-[#34C759]/10'}`}>回應詩歌</p>
-                                                        <div className="space-y-3">{(data.songs.response || []).map((s, i) => <p key={i} className={`${textMd} font-bold text-[#1C1C1E] leading-tight transition-all duration-300`}>・{s}</p>)}</div>
+                                                        <div className="space-y-3">{(safeData.songs.response || []).map((s, i) => <p key={i} className={`${textMd} font-bold text-[#1C1C1E] leading-tight transition-all duration-300`}>・{s}</p>)}</div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -603,7 +728,7 @@ clock: <Fragment><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" /></Fragm
                                         
                                         {/* 解除大卡片包裝，改為獨立的卡片網格，避免尺寸與視覺擁擠 */}
                                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 lg:gap-6 items-start">
-                                            {(data.announcements || []).map((item, idx) => {
+                                            {(safeData.announcements || []).map((item, idx) => {
                                                 const isNewsOpen = expandedNewsList.includes(idx);
                                                 
                                                 return (
@@ -636,7 +761,7 @@ clock: <Fragment><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" /></Fragm
                                                         {isNewsOpen && (
     <div className={`px-6 pb-6 pt-2 border-t mt-1 mx-4 ${themeScriptureBorderClass}`}>
         <ul className={`${textMd} font-normal text-[#48484A] leading-relaxed mt-3 transition-all duration-300 list-disc pl-5 space-y-2.5 marker:text-gray-400`}>
-            {item.detail.split('\n').map((line, li) => {
+            {(item.detail || '').split('\n').map((line, li) => {
                 if (!line.trim()) return null; // 略過空行
                 
                 // 移除同工可能在後台手動輸入的項目符號 (例如 -, *, ・)，避免前台出現「兩個點」
@@ -666,7 +791,7 @@ clock: <Fragment><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" /></Fragm
                                         
                                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 xl:gap-8 items-start">
                                             <div className={`${cardStyle} ${isMay || isDec ? themeScriptureBorderClass : 'border-[#34C759]/20'} lg:col-span-8 xl:col-span-8`}>
-                                                {(data.groups[activeGroupTab] || []).map((group, idx) => (
+                                                {(safeData.groups[activeGroupTab] || []).map((group, idx) => (
                                                     <div key={idx} className={`px-6 py-5 flex items-center justify-between border-b last:border-0 hover:bg-white/50 transition-colors gap-4 ${isMay || isDec ? themeScriptureBorderClass : 'border-[#34C759]/10'}`}>
                                                         <div className="flex-1 min-w-0 pr-2">
                                                             <p className={`whitespace-normal break-words ${textLg} font-bold text-[#1C1C1E] transition-all duration-300`}>{group.name}</p>
@@ -677,7 +802,7 @@ clock: <Fragment><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" /></Fragm
                                                         </span>
                                                     </div>
                                                 ))}
-                                                {(data.groups[activeGroupTab] || []).length === 0 && (
+                                                {(safeData.groups[activeGroupTab] || []).length === 0 && (
                                                     <div className="p-8 text-center text-gray-400 font-medium">目前無小組資料</div>
                                                 )}
                                             </div>
@@ -685,7 +810,7 @@ clock: <Fragment><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" /></Fragm
                                             <div className="pt-4 md:pt-0 lg:col-span-4 xl:col-span-4">
                                                 <h4 className={`${textH3} font-black text-[#8E8E93] uppercase tracking-[0.2em] mb-4 px-2 transition-all duration-300`}>海外分會 OVERSEAS</h4>
                                                 <div className="space-y-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4 sm:space-y-0 lg:space-y-4 items-start">
-                                                    {(data.overseas || []).map((ov, idx) => (
+                                                    {(safeData.overseas || []).map((ov, idx) => (
                                                         <div key={idx} className={`${cardStyle} ${isMay || isDec ? themeScriptureBorderClass : 'border-[#34C759]/20'} p-6 flex flex-col gap-4 m-0`}>
                                                             <div className="flex items-center gap-4">
                                                                 <span className="text-3xl leading-none shrink-0">{ov.flag}</span>
@@ -718,12 +843,12 @@ clock: <Fragment><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" /></Fragm
                                             <h4 className={`${textH3} font-black uppercase tracking-[0.2em] px-1 transition-all duration-300`}>奉獻帳戶資訊</h4>
                                         </div>
                                         <div className="space-y-4">
-                                            <button type="button" onClick={() => copyToClipboard(data.offering.account)} className={`w-full flex items-start justify-between gap-3 p-5 bg-white/60 hover:bg-white rounded-[1.5rem] border border-gray-200/50 shadow-sm transition-all text-left group ${themeGroupHoverBgClass}`}>
+                                            <button type="button" onClick={() => copyToClipboard(safeData.offering.account)} className={`w-full flex items-start justify-between gap-3 p-5 bg-white/60 hover:bg-white rounded-[1.5rem] border border-gray-200/50 shadow-sm transition-all text-left group ${themeGroupHoverBgClass}`}>
                                                 <div className="flex items-start gap-3 flex-1 min-w-0">
                                                     <Icon name="card" size={22} className={`mt-1 shrink-0 transition-colors duration-300 ${themeColorClass}`} />
                                                     <div className="space-y-1 w-full">
-                                                        <p className={`${textXs} font-bold text-[#8E8E93] uppercase tracking-widest transition-all duration-300`}>{data.offering.bank}</p>
-                                                        <p className={`${textHuge} break-words font-black text-[#1C1C1E] tracking-tighter leading-none transition-all duration-300`}>{data.offering.account}</p>
+                                                        <p className={`${textXs} font-bold text-[#8E8E93] uppercase tracking-widest transition-all duration-300`}>{safeData.offering.bank}</p>
+                                                        <p className={`${textHuge} break-words font-black text-[#1C1C1E] tracking-tighter leading-none transition-all duration-300`}>{safeData.offering.account}</p>
                                                     </div>
                                                 </div>
                                                 <div className="flex flex-col items-center gap-1 mt-1 shrink-0">
@@ -735,7 +860,7 @@ clock: <Fragment><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" /></Fragm
                                                 <Icon name="users" size={20} className={`mt-0.5 shrink-0 transition-colors duration-300 ${themeColorClass}`} />
                                                 <div className="space-y-1 flex-1 min-w-0">
                                                     <p className={`${textXs} font-bold text-[#8E8E93] uppercase tracking-widest transition-all duration-300`}>戶名 ACCOUNT NAME</p>
-                                                    <p className={`${textSm} break-words font-bold text-[#1C1C1E] leading-snug transition-all duration-300`}>{data.offering.name}</p>
+                                                    <p className={`${textSm} break-words font-bold text-[#1C1C1E] leading-snug transition-all duration-300`}>{safeData.offering.name}</p>
                                                 </div>
                                             </div>
                                             <p className={`${textXs} text-[#8E8E93] font-medium text-center leading-relaxed mt-2 py-2.5 rounded-lg transition-all duration-300`}>＊透過銀行轉帳奉獻後，請通知辦公室同工＊</p>
@@ -747,11 +872,11 @@ clock: <Fragment><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" /></Fragm
                                             <h4 className={`${textH3} font-black uppercase tracking-[0.2em] px-1 transition-all duration-300`}>聯絡我們 CONTACT</h4>
                                         </div>
                                         <div className="space-y-4">
-                                            <a href={`tel:${data.office.phone}`} className={`flex items-start gap-3 p-5 bg-white/60 hover:bg-white rounded-[1.5rem] border border-gray-200/50 shadow-sm transition-all block cursor-pointer group ${themeGroupHoverBgClass}`}>
+                                            <a href={`tel:${safeData.office.phone}`} className={`flex items-start gap-3 p-5 bg-white/60 hover:bg-white rounded-[1.5rem] border border-gray-200/50 shadow-sm transition-all block cursor-pointer group ${themeGroupHoverBgClass}`}>
                                                 <Icon name="phone" size={20} className={`mt-1 shrink-0 transition-colors duration-300 ${themeColorClass}`} />
                                                 <div className="space-y-1 flex-1 min-w-0">
                                                     <p className={`${textXs} font-bold text-[#8E8E93] uppercase tracking-widest transition-all duration-300`}>馬可樓辦公室電話 PHONE</p>
-                                                    <p className={`${textHuge} font-black text-[#1C1C1E] tracking-tighter leading-none transition-colors ${themeGroupHoverTextClass}`}>{data.office.phone}</p>
+                                                    <p className={`${textHuge} font-black text-[#1C1C1E] tracking-tighter leading-none transition-colors ${themeGroupHoverTextClass}`}>{safeData.office.phone}</p>
                                                 </div>
                                             </a>
                                             <a href={`https://maps.app.goo.gl/UrqVpfa8BrJapqsG7?g_st=ic`} target="_blank" rel="noopener noreferrer" className={`flex items-start justify-between gap-3 p-5 bg-white/60 hover:bg-white rounded-[1.5rem] border border-gray-200/50 shadow-sm transition-all group ${themeGroupHoverBgClass}`}>
@@ -759,7 +884,7 @@ clock: <Fragment><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" /></Fragm
                                                     <Icon name="pin" size={20} className={`mt-0.5 shrink-0 transition-colors duration-300 ${themeColorClass}`} />
                                                     <div className="space-y-1 pr-2 w-full">
                                                         <p className={`${textXs} font-bold text-[#8E8E93] uppercase tracking-widest transition-all duration-300`}>馬可樓辦公室地址 ADDRESS</p>
-                                                        <p className={`${textMd} break-words font-bold text-[#1C1C1E] leading-snug transition-all duration-300`}>{data.office.address}</p>
+                                                        <p className={`${textMd} break-words font-bold text-[#1C1C1E] leading-snug transition-all duration-300`}>{safeData.office.address}</p>
                                                     </div>
                                                 </div>
                                                 <div className="flex flex-col items-center gap-1 shrink-0 mt-1">
