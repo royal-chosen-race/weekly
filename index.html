@@ -119,5 +119,71 @@ react-dom/cjs/react-dom.production.min.js:
 */
 
 document.getElementById('root').dataset.booting='false';</script>
+
+<script id="sunday-location-addon">
+(function () {
+  const DATA_URL = window.__WEEKLY_DATA_URL__ || 'https://royal-chosen-race-default-rtdb.firebaseio.com/bulletin_data.json';
+  const FALLBACK_LOCATION = '台北科技大學宏裕科技大樓B2國際會議廳（捷運忠孝新生站4號出口）';
+  let sundayLocation = FALLBACK_LOCATION;
+
+  function findContactList() {
+    const headings = Array.from(document.querySelectorAll('h4'));
+    const contactHeading = headings.find(el => /聯絡我們|CONTACT/.test(el.textContent || ''));
+    if (!contactHeading) return null;
+    const contactColumn = contactHeading.closest('.text-left') || contactHeading.parentElement?.parentElement;
+    if (!contactColumn) return null;
+    return contactColumn.querySelector('.space-y-4');
+  }
+
+  function ensureSundayCard() {
+    const list = findContactList();
+    if (!list) return false;
+
+    let card = list.querySelector('[data-sunday-location-card="true"]');
+    if (!card) {
+      const addressCards = Array.from(list.querySelectorAll('a'));
+      const template = addressCards.find(a => /馬可樓辦公室地址|ADDRESS/.test(a.textContent || ''));
+      if (!template) return false;
+
+      card = template.cloneNode(true);
+      card.dataset.sundayLocationCard = 'true';
+      card.setAttribute('aria-label', '主日聚會地點導航');
+      list.appendChild(card);
+    }
+
+    card.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(sundayLocation);
+    card.target = '_blank';
+    card.rel = 'noopener noreferrer';
+
+    const ps = card.querySelectorAll('p');
+    if (ps[0] && ps[0].textContent !== '主日聚會地點 SUNDAY SERVICE') ps[0].textContent = '主日聚會地點 SUNDAY SERVICE';
+    if (ps[1] && ps[1].textContent !== sundayLocation) ps[1].textContent = sundayLocation;
+    return true;
+  }
+
+  async function loadSundayLocation() {
+    try {
+      const response = await fetch(DATA_URL, { cache: 'no-store' });
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      const data = await response.json();
+      const value = data && data.office && data.office.sundayLocation;
+      if (typeof value === 'string' && value.trim()) sundayLocation = value.trim();
+    } catch (err) {
+      console.warn('[Sunday location] 使用預設主日聚會地點：', err);
+    }
+    ensureSundayCard();
+  }
+
+  const observer = new MutationObserver(() => ensureSundayCard());
+  const root = document.getElementById('root');
+  if (root) observer.observe(root, { childList: true, subtree: true });
+
+  window.addEventListener('DOMContentLoaded', ensureSundayCard);
+  setTimeout(ensureSundayCard, 0);
+  setTimeout(ensureSundayCard, 500);
+  loadSundayLocation();
+})();
+</script>
+
 </body>
 </html>
